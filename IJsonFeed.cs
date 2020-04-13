@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Text;
 
 namespace JokeGenerator {
 	interface IJsonFeed {
 
 		/// <summary>
-		/// returns the a list of json values in a list.
+		/// Abstract method for getting a list of json values.
 		/// </summary>
 		/// <param name="resource">The specific restapi resource we're using, defaulted to an empty.</param>
 		/// <param name="args">Key values pairs of strings for any arguments that need to be appended to url.</param>
@@ -17,7 +15,7 @@ namespace JokeGenerator {
 
 
 		/// <summary>
-		/// returns the assembled URL as a string.
+		/// Abstract mehtod for assembling a URL.
 		/// </summary>
 		/// <param name="resource">The specific restapi resource we're using, defaulted to an empty.</param>
 		/// <param name="args">Key values pairs of strings for any arguments that need to be appended to url.</param>
@@ -27,7 +25,7 @@ namespace JokeGenerator {
 
 
 		/// <summary>
-		/// Process a single json record
+		/// Abbstract method for processing a json values with no keys.
 		/// </summary>
 		/// <param name="url">The rest api url to retrieve the json string.</param>
 		/// <returns>A list of strings containing a single json record.</returns>
@@ -35,7 +33,7 @@ namespace JokeGenerator {
 
 
 		/// <summary>
-		/// Processes specific keys from json records and returns the results as a list of strings
+		/// Abstract method for processing a json method with keys.
 		/// </summary>
 		/// <param name="url">The rest api rul to retreive the json string.</param>
 		/// <returns>A list of strings containing one or more json records</returns>

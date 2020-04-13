@@ -11,10 +11,10 @@ namespace JokeGenerator {
 
 		private const int ResultsLimit = 9;
 
-		private static HttpClient _Client;
-		static private string _Url = "";
-		static private int _NumberOfresults;
-		static private String _JsonKey; // key to retrieve specific json values
+		private static HttpClient Client;
+		static private string Url = "";
+		static private int NumberOfresults;
+		static private String JsonKey; // key to retrieve specific json values
 
 		/// <summary>
 		/// JsonFeed constructor.
@@ -24,15 +24,15 @@ namespace JokeGenerator {
 		/// <returns></returns>
 		public JsonFeed(string endPoint, int numberOfresults, String jsonKey = null) {
 
-			_JsonKey = (jsonKey != null ) ? jsonKey : null;
-			_NumberOfresults = (numberOfresults > 1 && numberOfresults <= ResultsLimit) ? numberOfresults : 1;
-			_Url = endPoint;
+			JsonKey = (jsonKey != null) ? jsonKey : null;
+			NumberOfresults = (numberOfresults > 1 && numberOfresults <= ResultsLimit) ? numberOfresults : 1;
+			Url = endPoint;
 
 			try {
 
-				_Client = new HttpClient {
+				Client = new HttpClient {
 
-					BaseAddress = new Uri(_Url)
+					BaseAddress = new Uri(Url)
 				};
 			} catch(HttpRequestException e) {
 
@@ -41,36 +41,12 @@ namespace JokeGenerator {
 		}
 
 		/// <summary>
-		/// returns the a list of json values in a list.
-		/// </summary>
-		/// <param name="resource">The specific restapi resource we're using, defaulted to an empty.</param>
-		/// <param name="args">Key values pairs of strings for any arguments that need to be appended to url.</param>
-		/// <returns>A list of json encoded strings</returns>
-		public List<String> GetJSONValuesList(String resource = "", Dictionary<String, String> args = null) {
-
-			List<String> jsonList;
-			String url;
-
-			if(args != null && args.Count > 0)
-				url = AssembleURL(resource, args);
-			else
-				url = resource;
-
-			if(_JsonKey == null)
-				jsonList = ProcessNoJsonKey(url);
-			else
-				jsonList = ProcessWithJsonkKey(url);
-
-			return jsonList;
-		}
-
-		/// <summary>
 		/// returns the assembled URL as a string.
 		/// </summary>
 		/// <param name="resource">The specific restapi resource we're using, defaulted to an empty.</param>
 		/// <param name="args">Key values pairs of strings for any arguments that need to be appended to url.</param>
 		/// <returns>The url as a string.</returns>
-		private String AssembleURL(String resource, Dictionary<String, String> args) {
+		public string AssembleURL(string resource, Dictionary<string, string> args) {
 
 			String url = resource;
 			int parameterCount = 0;
@@ -81,6 +57,7 @@ namespace JokeGenerator {
 				url += "?";
 
 			foreach(var arg in args) {
+
 				if(parameterCount > 0 && arg.Value != "" & arg.Value != null) {
 					url += "&";
 				}
@@ -97,42 +74,83 @@ namespace JokeGenerator {
 		}
 
 		/// <summary>
-		/// Process a single json record
+		/// returns the a list of json values in a list.
 		/// </summary>
-		/// <param name="url">The rest api url to retrieve the json string.</param>
-		/// <returns>A list of strings containing a single json record.</returns>
-		private List<String> ProcessNoJsonKey(String url) {
+		/// <param name="resource">The specific restapi resource we're using, defaulted to an empty.</param>
+		/// <param name="args">Key values pairs of strings for any arguments that need to be appended to url.</param>
+		/// <returns>A list of json encoded strings</returns>
+		public List<string> GetJSONValuesList(string resource = "", Dictionary<string, string> args = null) {
 
-			String json = Task.FromResult(_Client.GetStringAsync(url).Result).Result;
-			return JsonConvert.DeserializeObject<List<String>>(json);
+			List<String> jsonList;
+			String url;
+
+			if(args != null && args.Count > 0)
+				url = AssembleURL(resource, args);
+			else
+				url = resource;
+
+			if(JsonKey == null)
+				jsonList = ProcessNoJsonKey(url);
+			else
+				jsonList = ProcessWithJsonkKey(url);
+
+			return jsonList;
 		}
 
 		/// <summary>
-		/// Processes specific keys from json records and returns the results as a list of strings
+		/// Processes a json string with no keys
+		/// </summary>
+		/// <param name="url">The rest api url to retrieve the json string.</param>
+		/// <returns>A list of strings containing a single json record.</returns>
+		public List<string> ProcessNoJsonKey(string url) {
+
+			List<String> returnList = new List<string>();
+
+			try {
+
+				String json = Task.FromResult(Client.GetStringAsync(url).Result).Result;
+
+				returnList = JsonConvert.DeserializeObject<List<String>>(json);
+			} catch(Exception e) {
+
+				Console.WriteLine(e);
+			}
+
+			return returnList;			
+		}
+
+		/// <summary>
+		/// Processes a json string containing keys.
 		/// </summary>
 		/// <param name="url">The rest api rul to retreive the json string.</param>
 		/// <returns>A list of strings containing one or more json records</returns>
-		private List<String> ProcessWithJsonkKey(String url) {
+		public List<string> ProcessWithJsonkKey(string url) {
 
 			List<String> results = null;
-			String result;			
+			String result;
 
 			// retrieve results from the specified json key
-			for(int i = 0; i < _NumberOfresults; i++) {
+			for(int i = 0; i < NumberOfresults; i++) {
+				
+				try {
 
-				String json = Task.FromResult(_Client.GetStringAsync(url).Result).Result;
+					String json = Task.FromResult(Client.GetStringAsync(url).Result).Result;
 
-				if(results == null) {
+					if(results == null) {
 
-					results = new List<String>();
-					result = JsonConvert.DeserializeObject<dynamic>(json)[_JsonKey];
-					results.Add(result);
-				} else {
+						results = new List<String>();
+						result = JsonConvert.DeserializeObject<dynamic>(json)[JsonKey];
+						results.Add(result);
+					} else {
 
-					result = JsonConvert.DeserializeObject<dynamic>(json)[_JsonKey];
-					results.Add(result);
-				}
-			}			
+						result = JsonConvert.DeserializeObject<dynamic>(json)[JsonKey];
+						results.Add(result);
+					}
+				} catch(Exception e) {
+
+					Console.WriteLine(e);
+				}			
+			}
 
 			return results;
 		}
@@ -144,22 +162,6 @@ namespace JokeGenerator {
 		public static int GetResultLimit() {
 
 			return ResultsLimit;
-		}
-
-		List<string> IJsonFeed.GetJSONValuesList(string resource, Dictionary<string, string> args) {
-			throw new NotImplementedException();
-		}
-
-		string IJsonFeed.AssembleURL(string resource, Dictionary<string, string> args) {
-			throw new NotImplementedException();
-		}
-
-		List<string> IJsonFeed.ProcessNoJsonKey(string url) {
-			throw new NotImplementedException();
-		}
-
-		List<string> IJsonFeed.ProcessWithJsonkKey(string url) {
-			throw new NotImplementedException();
 		}
 	}
 }
